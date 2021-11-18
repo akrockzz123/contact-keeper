@@ -11,11 +11,29 @@ var bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken')
 
 const config = require('config')
+
+const auth = require("../middleware/auth")
+
 // @route GET api/auth
 //@desc Get logged in user
 //@access Private
-router.get('/',(req,res) => {
-    res.send('Get logged in user');
+router.get('/',auth, async (req,res) => {
+
+    try {
+        
+        const user = await User.findById(req.user.id).select('-password')
+
+        res.json(user)
+    
+    } catch (err) {
+        
+        console.error(err.message)
+
+        res.status(500).send('Server error')
+        
+    }
+   
+    //res.send('Get logged in user');
 });
 
 
@@ -33,17 +51,17 @@ check('password','Please enter password of minimum length 6').isLength({ min: 6 
         return res.status(400).json({ errors: errors.array() })
     }
 
-    const {email,password } = req.body
+    const { email, password } = req.body
 
     try {
         let user = await User.findOne({ email })
 
         if(!user)
         {
-            return res.status(400).json({ msg: "Invalid credentials "})
+            return res.status(400).json({ msg: "Invalid credentials ", e : email})
         }
 
-        const isMatch = await bcrypt.compare(password)
+        const isMatch = await bcrypt.compare(password,user.password)
         
         if(!isMatch)
         {
