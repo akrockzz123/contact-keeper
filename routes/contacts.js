@@ -126,8 +126,33 @@ router.put('/:id',auth,async (req,res) => {
 // @route DELETE api/contacts/:id
 //@desc delete contact of user
 //@access Private
-router.delete('/',(req,res) => {
-    res.send('Update contact of user');
+router.delete('/:id',auth,async(req,res) => {
+
+    try {
+        
+        const contact = await Contact.findById(req.params.id)
+
+        if(!contact)
+        {
+            res.status(404).json({ msg: "Contact doesnot exist"})
+        }
+
+        if(contact.user.toString() !== req.user.id)
+        {
+            res.status(401).json({ msg: "Not authorized to change this contact"})
+        }
+        else{
+                await Contact.findByIdAndDelete(req.params.id)
+
+                res.json("Contact removed")
+        }
+
+    } catch (err) {
+        console.error(err.message)
+
+        res.status(500).send("Server Error")
+    }
+  
 });
 
 
